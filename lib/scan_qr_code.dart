@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:qr_code/main.dart'; // for AppColors
+import 'package:qr_code/main.dart'; // for AppColors, AppBackground, GlassCard
 import 'package:qr_code/scan_history_model.dart';
 import 'package:qr_code/history_service.dart';
 
@@ -83,63 +83,60 @@ class _ScanQrCodeState extends State<ScanQrCode> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('QR Link')),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 40),
-              if (hasResult)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.cardBorder),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        qrResult,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: AppColors.textDark,
-                          fontWeight: FontWeight.w500,
+      body: AppBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 40),
+                if (hasResult)
+                  GlassCard(
+                    radius: 20,
+                    padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+                    child: Column(
+                      children: [
+                        Text(
+                          qrResult,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: AppColors.textDark,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _actionIcon(icon: Icons.search, label: 'Search', onTap: _webSearch),
-                          _actionIcon(icon: Icons.share_outlined, label: 'Share', onTap: _shareResult),
-                          _actionIcon(icon: Icons.copy_outlined, label: 'Copy', onTap: _copyToClipboard),
-                        ],
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            _actionIcon(icon: Icons.search, label: 'Search', onTap: _webSearch),
+                            _actionIcon(icon: Icons.share_outlined, label: 'Share', onTap: _shareResult),
+                            _actionIcon(icon: Icons.copy_outlined, label: 'Copy', onTap: _copyToClipboard),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Column(
+                    children: const [
+                      Icon(Icons.qr_code_scanner_rounded, size: 64, color: AppColors.textGrey),
+                      SizedBox(height: 16),
+                      Text(
+                        'Scanned data will appear here',
+                        style: TextStyle(color: AppColors.textGrey, fontSize: 15),
                       ),
                     ],
                   ),
-                )
-              else
-                Column(
-                  children: const [
-                    Icon(Icons.qr_code_scanner_rounded, size: 64, color: AppColors.textGrey),
-                    SizedBox(height: 16),
-                    Text(
-                      'Scanned data will appear here',
-                      style: TextStyle(color: AppColors.textGrey, fontSize: 15),
-                    ),
-                  ],
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: scanQR,
+                  icon: const Icon(Icons.qr_code_scanner_rounded),
+                  label: Text(hasResult ? 'Scan Again' : 'Scan Code'),
                 ),
-              const Spacer(),
-              ElevatedButton.icon(
-                onPressed: scanQR,
-                icon: const Icon(Icons.qr_code_scanner_rounded),
-                label: Text(hasResult ? 'Scan Again' : 'Scan Code'),
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
       ),
