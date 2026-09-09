@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:qr_code/main.dart'; // for AppColors
 
 class GenerateQRCode extends StatefulWidget {
   const GenerateQRCode({super.key});
@@ -25,28 +26,18 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
       );
       return;
     }
-
     try {
-      // Find the boundary of the QR widget
-      RenderRepaintBoundary boundary = _qrKey.currentContext!
-          .findRenderObject() as RenderRepaintBoundary;
-
-      // Convert to image
+      RenderRepaintBoundary boundary =
+      _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData =
-      await image.toByteData(format: ui.ImageByteFormat.png);
+      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
-      // Save to a temporary file
       final tempDir = await getTemporaryDirectory();
       final file = await File('${tempDir.path}/qr_code.png').create();
       await file.writeAsBytes(pngBytes);
 
-      // Share the file
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'Here is my QR code',
-      );
+      await Share.shareXFiles([XFile(file.path)], text: 'Here is my QR code');
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -58,55 +49,151 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Generate QR Code',
-          style: TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.greenAccent,
-      ),
-      body: Center(
+      appBar: AppBar(title: const Text('QR Link')),
+      body: SafeArea(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (qrData.isNotEmpty)
-                RepaintBoundary(
-                  key: _qrKey,
-                  child: Container(
-                    color: Colors.white, // needed so png background isn't transparent
-                    padding: const EdgeInsets.all(10),
-                    child: QrImageView(data: qrData, size: 200),
+              if (qrData.isEmpty) ...[
+                const Text(
+                  'Generate Code',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDark,
                   ),
                 ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.only(left: 10, right: 10),
-                child: TextField(
+                const SizedBox(height: 6),
+                const Text(
+                  'Enter your data below to create a QR code.',
+                  style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Enter your data',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextField(
                   controller: urlController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter your data',
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15)),
-                    labelText: 'Enter your data',
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    hintText: 'https://example.com or any text',
                   ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    qrData = urlController.text;
-                  });
-                },
-                child: const Text('Generate QR Code'),
-              ),
-              if (qrData.isNotEmpty) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 24),
                 ElevatedButton.icon(
-                  onPressed: _shareQrCode,
-                  icon: const Icon(Icons.share),
-                  label: const Text('Share'),
+                  onPressed: () {
+                    if (urlController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter some data first')),
+                      );
+                      return;
+                    }
+                    setState(() {
+                      qrData = urlController.text.trim();
+                    });
+                  },
+                  icon: const Icon(Icons.qr_code_2_rounded),
+                  label: const Text('Generate QR Code'),
+                ),
+              ] else ...[
+                const Text(
+                  'Generated Code',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textDark,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Your QR code is ready to share or save.',
+                  style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.cardBorder),
+                  ),
+                  child: Column(
+                    children: [
+                      RepaintBoundary(
+                        key: _qrKey,
+                        child: Container(
+                          color: Colors.white,
+                          padding: const EdgeInsets.all(16),
+                          child: QrImageView(data: qrData, size: 200),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'ENCODED DATA',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textGrey,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          qrData,
+                          style: const TextStyle(color: AppColors.textDark),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _shareQrCode,
+                        icon: const Icon(Icons.share_outlined),
+                        label: const Text('Share'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _shareQrCode, // uses same share sheet; user can pick "Save"
+                        icon: const Icon(Icons.download_outlined),
+                        label: const Text('Save'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      qrData = '';
+                      urlController.clear();
+                    });
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Generate New'),
                 ),
               ],
             ],
@@ -116,64 +203,3 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
     );
   }
 }
-
-/*
-import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-
-class GenerateQRCode extends StatefulWidget {
-  const GenerateQRCode({super.key});
-
-  @override
-  State<GenerateQRCode> createState() => _GenerateQRCodeState();
-}
-
-class _GenerateQRCodeState extends State<GenerateQRCode> {
-  TextEditingController urlController = TextEditingController();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Generate QR Code',
-          style: TextStyle(color: Colors.blueGrey, fontWeight: FontWeight.w600),
-        ),
-        backgroundColor: Colors.greenAccent,
-      ),
-
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if(urlController.text.isNotEmpty)
-                QrImageView(data: urlController.text,size:200),
-              SizedBox(height: 10,),
-              Container(
-                padding: EdgeInsets.only(left: 10,right: 10),
-                child: TextField(
-                  controller: urlController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter your data',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
-                    labelText: 'Enter your data'
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              ElevatedButton(onPressed: (){
-                setState(() {
-
-                });
-              }, child: Text('Generate QR Code'))
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-*/
