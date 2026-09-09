@@ -4,6 +4,8 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:qr_code/main.dart'; // for AppColors
+import 'package:qr_code/scan_history_model.dart';
+import 'package:qr_code/history_service.dart';
 
 class ScanQrCode extends StatefulWidget {
   const ScanQrCode({super.key});
@@ -154,6 +156,29 @@ class _QrScannerPage extends StatefulWidget {
 class _QrScannerPageState extends State<_QrScannerPage> {
   bool _hasScanned = false;
 
+  Future<void> _handleDetected(String code) async {
+    // Prevent double-triggering while we're saving.
+    _hasScanned = true;
+
+    try {
+      final id = DateTime.now().millisecondsSinceEpoch.toString();
+      final imagePath = await HistoryService.saveQrImage(code, id);
+      await HistoryService.addHistory(
+        ScanHistoryItem(
+          id: id,
+          imagePath: imagePath,
+          data: code,
+          scannedAt: DateTime.now(),
+        ),
+      );
+    } catch (_) {
+      // Even if saving to history fails, don't block returning the result.
+    }
+
+    if (!mounted) return;
+    Navigator.pop(context, code);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -169,8 +194,7 @@ class _QrScannerPageState extends State<_QrScannerPage> {
           if (barcodes.isNotEmpty) {
             final code = barcodes.first.rawValue;
             if (code != null) {
-              _hasScanned = true;
-              Navigator.pop(context, code);
+              _handleDetected(code);
             }
           }
         },

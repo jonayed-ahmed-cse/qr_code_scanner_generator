@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_code/generate_qr_code.dart';
 import 'package:qr_code/scan_qr_code.dart';
+import 'package:qr_code/history_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -69,6 +70,16 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: AppColors.textDark,
+            minimumSize: const Size.fromHeight(48),
+            textStyle: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
@@ -97,7 +108,7 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('QR Link')),
+      //appBar: AppBar(title: const Text('QR Link')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -128,7 +139,7 @@ class HomePage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'QR Scan',
+                'QR Link',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
@@ -166,6 +177,18 @@ class HomePage extends StatelessWidget {
                 },
                 icon: const Icon(Icons.add_box_outlined),
                 label: const Text('Generate QR Code'),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const HistoryScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.history_rounded),
+                label: const Text('History'),
               ),
             ],
           ),
