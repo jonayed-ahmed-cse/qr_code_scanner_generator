@@ -1,18 +1,3 @@
-# qr_code
+- 👉Click on thumbnail for the QR Link apk
 
-A new Flutter project.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-# qr_code_scanner_generator
+[![Click on thumbnail for the QR Link apk](https://github.com/jonayed-ahmed-cse/qr_code_scanner_generator/blob/db9712f073f4698f3a39af93e53d8e0d3bf885e4/QR%20Link%20banner.png)](https://drive.google.com/drive/folders/1JGIB5R1_3EnsMIxiH5KnL3b0dYR6AQTq)
