@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'main.dart'; // for AppColors, AppBackground, GlassCard, GlassCircle
+import 'main.dart';
 import 'scan_history_model.dart';
 import 'history_service.dart';
 import 'scan_qr_code.dart';
@@ -97,26 +97,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _shareItem(ScanHistoryItem item) async {
-    await Share.share(item.data);
+    await SharePlus.instance.share(ShareParams(text: item.data));
   }
 
   Widget _itemIcon({
     required IconData icon,
     required VoidCallback onTap,
-    Color? color,
+    required Color color,
   }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(8),
       child: Padding(
         padding: const EdgeInsets.all(6),
-        child: Icon(icon, size: 20, color: color ?? AppColors.textGrey),
+        child: Icon(icon, size: 20, color: color),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('History'),
@@ -141,27 +142,27 @@ class _HistoryScreenState extends State<HistoryScreen> {
               children: [
                 GlassCircle(
                   size: 96,
-                  child: const Icon(
+                  child: Icon(
                     Icons.history_rounded,
                     size: 44,
-                    color: AppColors.textGrey,
+                    color: c.textGrey,
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'No History Found',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.textDark,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Your scanned QR codes will show up here once you scan something.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: AppColors.textGrey,
+                    color: c.textGrey,
                     fontSize: 14,
                     height: 1.4,
                   ),
@@ -205,12 +206,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: AppColors.glassFillStrong,
+                          color: c.glassFillStrong,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.qr_code_2_rounded,
-                          color: AppColors.textGrey,
+                          color: c.textGrey,
                         ),
                       ),
                     ),
@@ -224,18 +225,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           item.data,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: AppColors.textDark,
+                            color: c.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           DateFormat('dd MMM yyyy, hh:mm a')
                               .format(item.scannedAt),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textGrey,
+                            color: c.textGrey,
                           ),
                         ),
                       ],
@@ -247,10 +248,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     children: [
                       _itemIcon(
                         icon: Icons.copy_outlined,
+                        color: c.textGrey,
                         onTap: () => _copyItem(item),
                       ),
                       _itemIcon(
                         icon: Icons.share_outlined,
+                        color: c.textGrey,
                         onTap: () => _shareItem(item),
                       ),
                       _itemIcon(

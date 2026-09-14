@@ -6,7 +6,8 @@ import 'package:flutter/rendering.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:qr_code/main.dart'; // for AppColors, AppBackground, GlassCard
+import 'package:gal/gal.dart';
+import 'package:qr_code/main.dart';
 
 class GenerateQRCode extends StatefulWidget {
   const GenerateQRCode({super.key});
@@ -19,6 +20,14 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
   final GlobalKey _qrKey = GlobalKey();
   String qrData = '';
 
+  Future<Uint8List> _renderQrPng() async {
+    RenderRepaintBoundary boundary =
+    _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+    ui.Image image = await boundary.toImage(pixelRatio: 3.0);
+    ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
+  }
+
   Future<void> _shareQrCode() async {
     if (qrData.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -27,17 +36,15 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
       return;
     }
     try {
-      RenderRepaintBoundary boundary =
-      _qrKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0);
-      ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
+      final pngBytes = await _renderQrPng();
 
       final tempDir = await getTemporaryDirectory();
       final file = await File('${tempDir.path}/qr_code.png').create();
       await file.writeAsBytes(pngBytes);
 
-      await Share.shareXFiles([XFile(file.path)], text: 'Here is my QR code');
+      await SharePlus.instance.share(
+        ShareParams(files: [XFile(file.path)], text: 'Here is my QR code'),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -46,8 +53,55 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
     }
   }
 
+  Future<void> _saveQrCode() async {
+    if (qrData.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please generate a QR code first')),
+      );
+      return;
+    }
+    try {
+      final pngBytes = await _renderQrPng();
+
+      var hasAccess = await Gal.hasAccess();
+      if (!hasAccess) {
+        hasAccess = await Gal.requestAccess();
+      }
+      if (!hasAccess) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Photo library permission is needed to save'),
+          ),
+        );
+        return;
+      }
+
+      await Gal.putImageBytes(
+        pngBytes,
+        name: 'qr_code_${DateTime.now().millisecondsSinceEpoch}',
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Saved to your photos')),
+      );
+    } on GalException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.type.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save QR code: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('QR Link')),
       body: AppBackground(
@@ -58,32 +112,32 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (qrData.isEmpty) ...[
-                  const Text(
+                  Text(
                     'Generate Code',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textDark,
+                      color: c.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Enter your data below to create a QR code.',
-                    style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+                    style: TextStyle(color: c.textGrey, fontSize: 14),
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Enter your data',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textDark,
+                      color: c.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
                     controller: urlController,
                     maxLines: 5,
-                    style: const TextStyle(color: AppColors.textDark),
+                    style: TextStyle(color: c.textPrimary),
                     decoration: const InputDecoration(
                       hintText: 'https://example.com or any text',
                     ),
@@ -105,18 +159,18 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
                     label: const Text('Generate QR Code'),
                   ),
                 ] else ...[
-                  const Text(
+                  Text(
                     'Generated Code',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textDark,
+                      color: c.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'Your QR code is ready to share or save.',
-                    style: TextStyle(color: AppColors.textGrey, fontSize: 14),
+                    style: TextStyle(color: c.textGrey, fontSize: 14),
                   ),
                   const SizedBox(height: 20),
                   GlassCard(
@@ -136,14 +190,14 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Align(
+                        Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'ENCODED DATA',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: AppColors.textGrey,
+                              color: c.textGrey,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -153,13 +207,13 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: AppColors.glassFillStrong,
+                            color: c.glassFillStrong,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.cardBorder),
+                            border: Border.all(color: c.glassBorder),
                           ),
                           child: Text(
                             qrData,
-                            style: const TextStyle(color: AppColors.textDark),
+                            style: TextStyle(color: c.textPrimary),
                           ),
                         ),
                       ],
@@ -178,7 +232,7 @@ class _GenerateQRCodeState extends State<GenerateQRCode> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: _shareQrCode, // uses same share sheet; user can pick "Save"
+                          onPressed: _saveQrCode,
                           icon: const Icon(Icons.download_outlined),
                           label: const Text('Save'),
                         ),

@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:qr_code/main.dart'; // for AppColors, AppBackground, GlassCard
+import 'package:qr_code/main.dart';
 import 'package:qr_code/scan_history_model.dart';
 import 'package:qr_code/history_service.dart';
 
@@ -39,7 +39,7 @@ class _ScanQrCodeState extends State<ScanQrCode> {
   }
 
   Future<void> _shareResult() async {
-    await Share.share(qrResult);
+    await SharePlus.instance.share(ShareParams(text: qrResult));
   }
 
   Future<void> _webSearch() async {
@@ -62,6 +62,7 @@ class _ScanQrCodeState extends State<ScanQrCode> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    required Color color,
   }) {
     return InkWell(
       onTap: onTap,
@@ -70,9 +71,9 @@ class _ScanQrCodeState extends State<ScanQrCode> {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
         child: Column(
           children: [
-            Icon(icon, color: AppColors.textDark, size: 24),
+            Icon(icon, color: color, size: 24),
             const SizedBox(height: 6),
-            Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textDark)),
+            Text(label, style: TextStyle(fontSize: 13, color: color)),
           ],
         ),
       ),
@@ -81,6 +82,7 @@ class _ScanQrCodeState extends State<ScanQrCode> {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
       appBar: AppBar(title: const Text('QR Link')),
       body: AppBackground(
@@ -99,9 +101,9 @@ class _ScanQrCodeState extends State<ScanQrCode> {
                         Text(
                           qrResult,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
-                            color: AppColors.textDark,
+                            color: c.textPrimary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -109,9 +111,9 @@ class _ScanQrCodeState extends State<ScanQrCode> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _actionIcon(icon: Icons.search, label: 'Search', onTap: _webSearch),
-                            _actionIcon(icon: Icons.share_outlined, label: 'Share', onTap: _shareResult),
-                            _actionIcon(icon: Icons.copy_outlined, label: 'Copy', onTap: _copyToClipboard),
+                            _actionIcon(icon: Icons.search, label: 'Search', color: c.textPrimary, onTap: _webSearch),
+                            _actionIcon(icon: Icons.share_outlined, label: 'Share', color: c.textPrimary, onTap: _shareResult),
+                            _actionIcon(icon: Icons.copy_outlined, label: 'Copy', color: c.textPrimary, onTap: _copyToClipboard),
                           ],
                         ),
                       ],
@@ -119,12 +121,12 @@ class _ScanQrCodeState extends State<ScanQrCode> {
                   )
                 else
                   Column(
-                    children: const [
-                      Icon(Icons.qr_code_scanner_rounded, size: 64, color: AppColors.textGrey),
-                      SizedBox(height: 16),
+                    children: [
+                      Icon(Icons.qr_code_scanner_rounded, size: 64, color: c.textGrey),
+                      const SizedBox(height: 16),
                       Text(
                         'Scanned data will appear here',
-                        style: TextStyle(color: AppColors.textGrey, fontSize: 15),
+                        style: TextStyle(color: c.textGrey, fontSize: 15),
                       ),
                     ],
                   ),
@@ -154,7 +156,6 @@ class _QrScannerPageState extends State<_QrScannerPage> {
   bool _hasScanned = false;
 
   Future<void> _handleDetected(String code) async {
-    // Prevent double-triggering while we're saving.
     _hasScanned = true;
 
     try {
@@ -169,7 +170,6 @@ class _QrScannerPageState extends State<_QrScannerPage> {
         ),
       );
     } catch (_) {
-      // Even if saving to history fails, don't block returning the result.
     }
 
     if (!mounted) return;

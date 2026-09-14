@@ -33,6 +33,15 @@ class HistoryService {
   static Future<void> deleteItem(String id) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_key) ?? [];
+
+    for (final e in raw) {
+      final json = jsonDecode(e) as Map<String, dynamic>;
+      if (json['id'] == id) {
+        await _deleteImageFile(json['imagePath'] as String);
+        break;
+      }
+    }
+
     final remaining = raw.where((e) {
       final json = jsonDecode(e) as Map<String, dynamic>;
       return json['id'] != id;
@@ -42,13 +51,26 @@ class HistoryService {
 
   static Future<void> clearHistory() async {
     final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_key) ?? [];
+
+    for (final e in raw) {
+      final json = jsonDecode(e) as Map<String, dynamic>;
+      await _deleteImageFile(json['imagePath'] as String);
+    }
+
     await prefs.remove(_key);
   }
 
-  /// Generates a QR image PNG from [data] and saves it to the app's
-  /// documents directory. Returns the saved file path.
-  /// (We regenerate the QR from the decoded text instead of trying to
-  /// capture the live camera frame — it's simpler and always crisp.)
+  static Future<void> _deleteImageFile(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {
+    }
+  }
+
   static Future<String> saveQrImage(String data, String id) async {
     final painter = QrPainter(
       data: data,

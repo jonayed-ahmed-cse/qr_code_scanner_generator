@@ -8,56 +8,129 @@ void main() {
   runApp(const MyApp());
 }
 
-// Central dark + glassmorphism palette so every screen matches.
-// (textDark / cardBorder kept as aliases so old references still work.)
-class AppColors {
-  static const primary = Color(0xFF7C6CFF); // violet-blue accent
-  static const primaryDark = Color(0xFF5B4FE8);
-  static const accent = Color(0xFF35E0C6); // teal glow accent
-  static const bgTop = Color(0xFF14122A);
-  static const bgBottom = Color(0xFF07070F);
-  static const background = bgBottom;
+@immutable
+class AppPalette extends ThemeExtension<AppPalette> {
+  final Color primary;
+  final Color accent;
+  final Color bgTop;
+  final Color bgBottom;
+  final Color textPrimary;
+  final Color textGrey;
+  final Color glassFill;
+  final Color glassFillStrong;
+  final Color glassBorder;
 
-  static const textPrimary = Color(0xFFF3F4FA);
-  static const textGrey = Color(0xFF9AA0B4);
+  const AppPalette({
+    required this.primary,
+    required this.accent,
+    required this.bgTop,
+    required this.bgBottom,
+    required this.textPrimary,
+    required this.textGrey,
+    required this.glassFill,
+    required this.glassFillStrong,
+    required this.glassBorder,
+  });
 
-  static const glassFill = Color(0x14FFFFFF); // white ~8%
-  static const glassFillStrong = Color(0x1FFFFFFF); // white ~12%
-  static const glassBorder = Color(0x26FFFFFF); // white ~15%
+  static const dark = AppPalette(
+    primary: Color(0xFF7C6CFF),
+    accent: Color(0xFF35E0C6),
+    bgTop: Color(0xFF14122A),
+    bgBottom: Color(0xFF07070F),
+    textPrimary: Color(0xFFF3F4FA),
+    textGrey: Color(0xFF9AA0B4),
+    glassFill: Color(0x14FFFFFF),
+    glassFillStrong: Color(0x1FFFFFFF),
+    glassBorder: Color(0x26FFFFFF),
+  );
 
-  // Backward-compatible aliases used across the other screens.
-  static const textDark = textPrimary;
-  static const cardBorder = glassBorder;
+  static const light = AppPalette(
+    primary: Color(0xFF6C5CE7),
+    accent: Color(0xFF00B0A0),
+    bgTop: Color(0xFFEFF1FF),
+    bgBottom: Color(0xFFDCE3FA),
+    textPrimary: Color(0xFF1E2233),
+    textGrey: Color(0xFF667085),
+    glassFill: Color(0xB3FFFFFF),
+    glassFillStrong: Color(0xE6FFFFFF),
+    glassBorder: Color(0x33202436),
+  );
+
+  @override
+  AppPalette copyWith({
+    Color? primary,
+    Color? accent,
+    Color? bgTop,
+    Color? bgBottom,
+    Color? textPrimary,
+    Color? textGrey,
+    Color? glassFill,
+    Color? glassFillStrong,
+    Color? glassBorder,
+  }) {
+    return AppPalette(
+      primary: primary ?? this.primary,
+      accent: accent ?? this.accent,
+      bgTop: bgTop ?? this.bgTop,
+      bgBottom: bgBottom ?? this.bgBottom,
+      textPrimary: textPrimary ?? this.textPrimary,
+      textGrey: textGrey ?? this.textGrey,
+      glassFill: glassFill ?? this.glassFill,
+      glassFillStrong: glassFillStrong ?? this.glassFillStrong,
+      glassBorder: glassBorder ?? this.glassBorder,
+    );
+  }
+
+  @override
+  AppPalette lerp(ThemeExtension<AppPalette>? other, double t) {
+    if (other is! AppPalette) return this;
+    return AppPalette(
+      primary: Color.lerp(primary, other.primary, t)!,
+      accent: Color.lerp(accent, other.accent, t)!,
+      bgTop: Color.lerp(bgTop, other.bgTop, t)!,
+      bgBottom: Color.lerp(bgBottom, other.bgBottom, t)!,
+      textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
+      textGrey: Color.lerp(textGrey, other.textGrey, t)!,
+      glassFill: Color.lerp(glassFill, other.glassFill, t)!,
+      glassFillStrong: Color.lerp(glassFillStrong, other.glassFillStrong, t)!,
+      glassBorder: Color.lerp(glassBorder, other.glassBorder, t)!,
+    );
+  }
 }
 
-/// Full-screen dark gradient with soft color glows, placed behind every page.
+class AppColors {
+  static AppPalette of(BuildContext context) =>
+      Theme.of(context).extension<AppPalette>() ?? AppPalette.dark;
+}
+
 class AppBackground extends StatelessWidget {
   final Widget child;
   const AppBackground({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Stack(
       fit: StackFit.expand,
       children: [
         Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [AppColors.bgTop, AppColors.bgBottom],
+              colors: [c.bgTop, c.bgBottom],
             ),
           ),
         ),
         Positioned(
           top: -70,
           right: -60,
-          child: _glow(AppColors.primary.withValues(alpha: 0.35), 220),
+          child: _glow(c.primary.withValues(alpha: 0.30), 220),
         ),
         Positioned(
           bottom: -90,
           left: -70,
-          child: _glow(AppColors.accent.withValues(alpha: 0.20), 260),
+          child: _glow(c.accent.withValues(alpha: 0.18), 260),
         ),
         child,
       ],
@@ -76,7 +149,6 @@ class AppBackground extends StatelessWidget {
   }
 }
 
-/// Reusable frosted-glass card: blurred backdrop + translucent fill + hairline border.
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
@@ -93,6 +165,7 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
@@ -100,9 +173,9 @@ class GlassCard extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: fill ?? AppColors.glassFill,
+            color: fill ?? c.glassFill,
             borderRadius: BorderRadius.circular(radius),
-            border: Border.all(color: AppColors.glassBorder, width: 1),
+            border: Border.all(color: c.glassBorder, width: 1),
           ),
           child: child,
         ),
@@ -111,7 +184,6 @@ class GlassCard extends StatelessWidget {
   }
 }
 
-/// Circular version of GlassCard, used for icon badges / empty states.
 class GlassCircle extends StatelessWidget {
   final double size;
   final Widget child;
@@ -119,6 +191,7 @@ class GlassCircle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return ClipOval(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
@@ -128,8 +201,8 @@ class GlassCircle extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.glassFill,
-            border: Border.all(color: AppColors.glassBorder, width: 1),
+            color: c.glassFill,
+            border: Border.all(color: c.glassBorder, width: 1),
           ),
           child: child,
         ),
@@ -138,92 +211,100 @@ class GlassCircle extends StatelessWidget {
   }
 }
 
+ThemeData _buildTheme(AppPalette p, Brightness brightness) {
+  return ThemeData(
+    useMaterial3: true,
+    brightness: brightness,
+    scaffoldBackgroundColor: p.bgBottom,
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: p.primary,
+      brightness: brightness,
+      primary: p.primary,
+    ),
+    extensions: [p],
+    appBarTheme: AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      centerTitle: true,
+      iconTheme: IconThemeData(color: p.textPrimary),
+      titleTextStyle: TextStyle(
+        color: p.textPrimary,
+        fontSize: 18,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: p.primary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(54),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        elevation: 8,
+        shadowColor: p.primary.withValues(alpha: 0.5),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        foregroundColor: p.textPrimary,
+        backgroundColor: p.glassFill,
+        minimumSize: const Size.fromHeight(54),
+        side: BorderSide(color: p.glassBorder, width: 1.2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: p.textPrimary,
+        minimumSize: const Size.fromHeight(48),
+        textStyle: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: p.glassFill,
+      hintStyle: TextStyle(color: p.textGrey),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: p.glassBorder),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: p.glassBorder),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: p.primary, width: 1.5),
+      ),
+    ),
+  );
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'QR Code Scanner and Generator',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: AppColors.bgBottom,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primary,
-          brightness: Brightness.dark,
-          primary: AppColors.primary,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: true,
-          iconTheme: IconThemeData(color: AppColors.textPrimary),
-          titleTextStyle: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(54),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            elevation: 8,
-            shadowColor: AppColors.primary.withValues(alpha: 0.5),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.textPrimary,
-            backgroundColor: AppColors.glassFill,
-            minimumSize: const Size.fromHeight(54),
-            side: const BorderSide(color: AppColors.glassBorder, width: 1.2),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            foregroundColor: AppColors.textPrimary,
-            minimumSize: const Size.fromHeight(48),
-            textStyle: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: AppColors.glassFill,
-          hintStyle: const TextStyle(color: AppColors.textGrey),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppColors.glassBorder),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppColors.glassBorder),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-          ),
-        ),
-      ),
+      theme: _buildTheme(AppPalette.light, Brightness.light),
+      darkTheme: _buildTheme(AppPalette.dark, Brightness.dark),
+      themeMode: ThemeMode.system,
       home: const HomePage(),
     );
   }
@@ -234,6 +315,7 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = AppColors.of(context);
     return Scaffold(
       body: AppBackground(
         child: SafeArea(
@@ -242,31 +324,30 @@ class HomePage extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo badge
                 GlassCircle(
                   size: 96,
-                  child: const Icon(
+                  child: Icon(
                     Icons.qr_code_2_rounded,
                     size: 46,
-                    color: AppColors.primary,
+                    color: c.primary,
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text(
+                Text(
                   'QR Link',
                   style: TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: c.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Fast, precise, and secure QR code management.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 15,
-                    color: AppColors.textGrey,
+                    color: c.textGrey,
                     height: 1.4,
                   ),
                 ),
